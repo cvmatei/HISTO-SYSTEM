@@ -4,12 +4,10 @@
 #include <signal.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <sys/sem.h>S
+#include <sys/sem.h>
 #include <errno.h>
 
 #define BUFFER_SIZE 256
-int sMemID;
-circular_buffer* buffer;
 
 typedef struct {
     char buffer[BUFFER_SIZE];
@@ -17,4 +15,8 @@ typedef struct {
     int write_index;
 } circular_buffer;
 
+int sMemID;
+circular_buffer* buffer;
 char getChar(int randomInt);
+int init_semaphore(int *semID);
+void detachAndExit(int sig);

@@ -1,4 +1,3 @@
-
 #include "../inc/dataProducer-1.h"
 
 int main() {
