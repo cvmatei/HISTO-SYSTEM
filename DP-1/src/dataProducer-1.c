@@ -32,10 +32,11 @@ int main() {
         //Child process (DP-2)
         char sMemIDString[32];
         sprintf(sMemIDString, "%d", sMemID); //Convert shmID to string
-        execl("../../DP-2/bin", "DP-2", sMemIDString, NULL); //Launch DP-2 with shmID as argument
-        //If execl returns, there was an error
-        printf("Error: execl() failed\n");
-        return 1;
+        if(execl("../../DP-2/bin", "DP-2", sMemIDString, NULL) == -1){
+            //If execl returns, there was an error
+            printf("Error: execl() failed\n");
+            return 1;
+        } //Launch DP-2 with shmID as argument
     }
 
     //Register signal handler for SIGINT

@@ -1,4 +1,3 @@
-
 #include "../inc/dataProducer-2.h"
 
 int main(int argc, char* argv[]){
@@ -10,7 +9,9 @@ int main(int argc, char* argv[]){
     pid_t dcPID = fork();
     if(dcPID == 0){
         //child process (DC application)
-        char dp2PIDStr[PID_STRING], dp1PIDStr[PID_STRING], shmIDStr[PID_STRING];
+        char dp2PIDStr[PID_STRING];
+        char dp1PIDStr[PID_STRING];
+        char shmIDStr[PID_STRING];
         sprintf(dp2PIDStr, "%d", dp2PID);
         sprintf(dp2PIDStr, "%d", dip1PID);
         sprintf(shmIDStr, "%d", shmID);
