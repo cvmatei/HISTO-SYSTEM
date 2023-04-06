@@ -19,11 +19,11 @@ int main(int argc, char* argv[]){
         if(execl("../../DC", "DC", dp2PIDStr, dp1PIDStr, shmIDStr, NULL) == -1){
             printf("Error in executing command line during DC execution in DP-2");
             return 1;
-        }
+        }//Launch DC with DP2PID, DP1PID, and shmID as argument
     } else if(dcPID < 0){
         printf("fork failed at DP-2 forking DC\n");
         return 1;
-    }
+    }//Fork failed
 
     circular_buffer* buffer = (circular_buffer*)shmat(shmID, NULL, 0);
 
