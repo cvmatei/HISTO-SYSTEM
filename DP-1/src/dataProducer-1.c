@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <../HISTO-SYSTEM/DP-1/inc/dataProducer-1.h>
 
 int main() {
     srand(time(NULL));
     int randomInt;
 
-    // Check if shared memory segment already exists
+    //Check if shared memory segment already exists
     key_t sMemKey = ftok(".", 16535);
     int sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
     if (sMemID == -1) {
-        // Shared memory segment already exists, attach to it
+        //Shared memory segment already exists
         sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
     }
     
@@ -17,7 +18,23 @@ int main() {
     buffer->read_index = 0;
     buffer->write_index = 0;
 
-    // Write random letters to circular buffer
+    //Launch DP-2 through the use of fork()
+    pid_t pid = fork();
+    if (pid == -1) {
+        //Fork failed
+        printf("Error: fork() failed\n");
+        return 1;
+    } else if (pid == 0) {
+        //Child process (DP-2)
+        char sMemIDString[32];
+        sprintf(sMemIDString, "%d", sMemID); //Convert shmID to string
+        execl("./DP-2", "DP-2", sMemIDString, NULL); //Launch DP-2 with shmID as argument
+        //If execl returns, there was an error
+        printf("Error: execl() failed\n");
+        return 1;
+    }
+
+    //Write random letters to circular buffer
     char letter;
     while (1) {
         randomInt = rand() % 20;
@@ -26,7 +43,7 @@ int main() {
         buffer->write_index = (buffer->write_index + 1) % BUFFER_SIZE;
     }
 
-    // Detach from shared memory segment
+    //Detach from shared memory segment
     shmdt(buffer);
 
     return 0;
