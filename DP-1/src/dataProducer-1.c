@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <../HISTO-SYSTEM/DP-1/inc/dataProducer-1.h>
+
+#include "../inc/dataProducer-1.h"
 
 int main() {
     srand(time(NULL));
     int randomInt;
+    int semID;
 
     //Check if shared memory segment already exists
     key_t sMemKey = ftok(".", 16535);
@@ -18,6 +18,11 @@ int main() {
     buffer->read_index = 0;
     buffer->write_index = 0;
 
+    if(init_semaphore(&semID) == 1)
+    {
+        printf("Error: Semaphore creation failed\n");
+    }
+
     //Launch DP-2 through the use of fork()
     pid_t pid = fork();
     if (pid == -1) {
@@ -28,19 +33,45 @@ int main() {
         //Child process (DP-2)
         char sMemIDString[32];
         sprintf(sMemIDString, "%d", sMemID); //Convert shmID to string
-        execl("./DP-2", "DP-2", sMemIDString, NULL); //Launch DP-2 with shmID as argument
+        execl("../../DP-2/bin", "DP-2", sMemIDString, NULL); //Launch DP-2 with shmID as argument
         //If execl returns, there was an error
         printf("Error: execl() failed\n");
         return 1;
     }
 
-    //Write random letters to circular buffer
-    char letter;
+    //Register signal handler for SIGINT
+    signal(SIGINT, detachAndExit);
+
+    // Generate 20 random letters and write all 20 letters into the sharedMemory buffer, then sleep for 2 seconds
     while (1) {
-        randomInt = rand() % 20;
-        letter = getChar(randomInt);
-        buffer->buffer[buffer->write_index] = letter;
-        buffer->write_index = (buffer->write_index + 1) % BUFFER_SIZE;
+        // waiting for the semaphore
+        struct sembuf semWait = {0, -1, 0};
+        semop(semID, &semWait, 1);
+
+        // Calculate number of available elements in the buffer
+        int numAvailable = (buffer->read_index - buffer->write_index - 1 + BUFFER_SIZE) % BUFFER_SIZE;
+
+        if (numAvailable >= 20) {
+            for (int i = 0; i < 20; i++) {
+                int randomInt = rand() % 20;
+                char letter = getChar(randomInt);
+                buffer->buffer[buffer->write_index] = letter;
+                buffer->write_index = (buffer->write_index + 1) % BUFFER_SIZE;
+            }
+        } else if (numAvailable > 0) {
+            for (int i = 0; i < numAvailable; i++) {
+                int randomInt = rand() % 20;
+                char letter = getChar(randomInt);
+                buffer->buffer[buffer->write_index] = letter;
+                buffer->write_index = (buffer->write_index + 1) % BUFFER_SIZE;
+            }
+        }
+
+        // signal the semaphore
+        struct sembuf semSignal = {0, 1, 0};
+        semop(semID, &semSignal, 1);
+
+        sleep(2);
     }
 
     //Detach from shared memory segment
@@ -94,4 +125,46 @@ char getChar(int randomInt){
         default:
             return 'Z';
     }
+}
+
+// FUNCTION: 	void init_semaphore() 
+// DESCRIPTION: This function initializes the semephore needed for the clients
+//              while making sure that more semaphores are not created.
+// PARAMETERS:  int *semID
+// RETURNS:     None.
+
+int init_semaphore(int *semID) 
+{
+    // get a unique key for the semaphore
+    key_t semKey = ftok(".", 'S');
+    if(semKey == -1) 
+    {
+        // can not create semaphore key, exiting
+        return 1;
+    }
+
+    // create the semaphore
+    *semID = semget(semKey, 1, IPC_CREAT | IPC_EXCL | 0666);
+    if (*semID == -1) 
+    {
+        if (errno == EEXIST) {
+            // semaphore already exists
+        } 
+        else 
+        {
+            // cannot create semaphore
+            return 1;
+        }
+    }
+
+    // initialize the semaphore value to 1
+    semctl(*semID, 0, SETVAL, 1);
+    return 0;
+}
+
+void detachAndExit(int sig) {
+    //Detach from shared memory segment
+    shmdt(buffer);
+    //Exit with no statement
+    exit(0);
 }
