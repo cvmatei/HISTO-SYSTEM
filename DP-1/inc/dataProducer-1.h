@@ -9,4 +9,3 @@ typedef struct {
 } circular_buffer;
 
 char getChar(int randomInt);
-int init_semaphore(int *semID)

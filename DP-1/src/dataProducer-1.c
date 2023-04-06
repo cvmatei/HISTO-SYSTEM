@@ -5,20 +5,15 @@
 int main() {
     srand(time(NULL));
     int randomInt;
-    int semID;
-
-    // Initialize the semaphore
-    init_semaphore(&semID);
 
     //Check if shared memory segment already exists
     key_t sMemKey = ftok(".", 16535);
     int sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
     if (sMemID == -1) {
-        //Shared memory segment already exists, get the shared memory ID
+        //Shared memory segment already exists
         sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
     }
     
-    //Attach circular buffer to shared memory
     circular_buffer* buffer = (circular_buffer*) shmat(sMemID, NULL, 0);
     buffer->read_index = 0;
     buffer->write_index = 0;
@@ -33,11 +28,10 @@ int main() {
         //Child process (DP-2)
         char sMemIDString[32];
         sprintf(sMemIDString, "%d", sMemID); //Convert shmID to string
-        if(execl("./DP-2", "DP-2", sMemIDString, NULL) == -1){
-            //If execl returns, there was an error
-            printf("Error: execl() failed\n");
-            return 1;
-        } //Launch DP-2 with shmID as argument
+        execl("./DP-2", "DP-2", sMemIDString, NULL); //Launch DP-2 with shmID as argument
+        //If execl returns, there was an error
+        printf("Error: execl() failed\n");
+        return 1;
     }
 
     //Write random letters to circular buffer
@@ -100,38 +94,4 @@ char getChar(int randomInt){
         default:
             return 'Z';
     }
-}
-
-// FUNCTION: 	void init_semaphore() 
-// DESCRIPTION: This function initializes the semephore needed for the clients
-//              while making sure that more semaphores are not created.
-// PARAMETERS:  int *semID
-// RETURNS:     None.
-int init_semaphore(int *semID) 
-{
-    // get a unique key for the semaphore
-    key_t semKey = ftok(".", 'S');
-    if(semKey == -1) 
-    {
-        // can not create semaphore key, exiting
-        return 1;
-    }
-
-    // create the semaphore
-    *semID = semget(semKey, 1, IPC_CREAT | IPC_EXCL | 0666);
-    if (*semID == -1) 
-    {
-        if (errno == EEXIST) {
-            // semaphore already exists
-        } 
-        else 
-        {
-            // cannot create semaphore
-            return 1;
-        }
-    }
-
-    // initialize the semaphore value to 1
-    semctl(*semID, 0, SETVAL, 1);
-    return 0;
 }
