@@ -33,6 +33,8 @@ int main(int argc, char* argv[]){
 
     //Write random letters to circular buffer
     char letter;
+    //Register signal handler for SIGINT
+    signal(SIGINT, detachAndExit);
     while (1) {
         int randomInt = rand() % 20;
         letter = getChar(randomInt);
