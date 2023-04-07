@@ -13,6 +13,7 @@ int main() {
         sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
     }
     
+    printf("shmID is %d\n", sMemID);
     circular_buffer* buffer = (circular_buffer*) shmat(sMemID, NULL, 0);
     buffer->read_index = 0;
     buffer->write_index = 0;
@@ -32,7 +33,7 @@ int main() {
         //Child process (DP-2)
         char sMemIDString[32];
         sprintf(sMemIDString, "%d", sMemID); //Convert shmID to string
-        if(execl("../../DP-2/bin", "DP-2", sMemIDString, NULL) == -1){
+        if(execl("../../DP-2/bin/DP-2", "DP-2", sMemIDString, NULL) == -1){
             //If execl returns, there was an error
             printf("Error: execl() failed\n");
             return 1;

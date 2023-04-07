@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
         sprintf(dp2PIDStr, "%d", dp2PID);
         sprintf(dp2PIDStr, "%d", dip1PID);
         sprintf(shmIDStr, "%d", shmID);
-        if(execl("../../DC/bin", "DC", dp2PIDStr, dp1PIDStr, shmIDStr, NULL) == -1){
+        if(execl("../../DC/bin/DC", "DC", shmIDStr, dp2PIDStr, dp1PIDStr, NULL) == -1){
             printf("Error in executing command line during DC execution in DP-2");
             return 1;
         }
@@ -122,7 +122,7 @@ char getChar(int randomInt){
 int init_semaphore(int *semID) 
 {
     // get a unique key for the semaphore
-    key_t semKey = ftok(".", 'S');
+    key_t semKey = ftok("../../DP-1/bin", 'S');
     if(semKey == -1) 
     {
         // can not create semaphore key, exiting

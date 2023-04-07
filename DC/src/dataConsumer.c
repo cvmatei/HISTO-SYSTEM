@@ -1,5 +1,7 @@
 #include "../inc/dataConsumer.h"
 
+circular_buffer *shared_buffer;
+
 int main(int argc, char *argv[]) {
     // Read command line arguments
     int sharedMemoryID = atoi(argv[1]);
@@ -8,13 +10,15 @@ int main(int argc, char *argv[]) {
     *dp1_pid = atoi(argv[2]);
     *dp2_pid = atoi(argv[3]);
 
+    printf("%d %d %d\n", sharedMemoryID, *dp1_pid, *dp2_pid);
+
     // Attach to shared memory
-    shmid = shmget(sharedMemoryID, sizeof(circular_buffer), 0666);
-    if (shmid == -1) {
-        perror("shmget");
-        exit(1);
-    }
-    shared_buffer = shmat(shmid, NULL, 0);
+    // shmid = shmget(sharedMemoryID, sizeof(circular_buffer), 0660);
+    // if (shmid == -1) {
+    //     perror("shmget DC");
+    //     exit(1);
+    // }
+    shared_buffer = (circular_buffer*)shmat(sharedMemoryID, NULL, 0);
     if (shared_buffer == (void *) -1) {
         perror("shmat");
         exit(1);
@@ -41,6 +45,8 @@ int main(int argc, char *argv[]) {
     // Main processing loop
     int num_reads = 0;
     while (1) {
+
+        printf("semid is %d\n", semid);
         // Wait for semaphore
         struct sembuf wait_op = {0, -1, 0};
         if (semop(semid, &wait_op, 1) == -1) {
@@ -78,8 +84,8 @@ int main(int argc, char *argv[]) {
 
 void handle_sigint(int sig) {
     // Send SIGINT to data producers
-    kill(dp1_pid, SIGINT);
-    kill(dp2_pid, SIGINT);
+    kill(*dp1_pid, SIGINT);
+    kill(*dp2_pid, SIGINT);
 }
 
 void display_histogram(int *letter_counts) {
@@ -135,7 +141,7 @@ void display_histogram(int *letter_counts) {
 int init_semaphore(int *semID) 
 {
     // get a unique key for the semaphore
-    key_t semKey = ftok(".", 'S');
+    key_t semKey = ftok("../../DP-1/bin", 'S');
     if(semKey == -1) 
     {
         // can not create semaphore key, exiting

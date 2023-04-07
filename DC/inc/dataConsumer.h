@@ -12,7 +12,6 @@
 
 int shmid;
 int semid;
-circular_buffer *shared_buffer;
 int *letter_counts;
 int *dp1_pid;
 int *dp2_pid;
@@ -25,3 +24,4 @@ typedef struct {
 
 void handle_sigint(int sig);
 void display_histogram(int *letter_counts);
+int init_semaphore(int *semID);
