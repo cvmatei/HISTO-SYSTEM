@@ -56,8 +56,7 @@ int main(int argc, char* argv[]){
         semop(semID, &semSignal, 1);
 
         // Sleep for 1/20 of a second
-        struct timespec sleepTime = {0, 50000};
-        nanosleep(&sleepTime, NULL);
+        usleep(50000);
     }
     return 0;
 }
