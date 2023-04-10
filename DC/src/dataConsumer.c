@@ -104,29 +104,30 @@ void display_histogram(int *letter_counts) {
     for (int i = 0; i < NUM_LETTERS; i++) {
         // Calculate count units
         int ones = letter_counts[i] % 10;
-        int tens = (letter_counts[i] / 10) % 10;
-        int hundreds = (letter_counts[i] / 100) % 10;
+        int tens = ((letter_counts[i] % 100) - ones)/10;
+        int hundreds = (letter_counts[i] - (tens*10) - ones)/100;
 
-        // Scale count units based on maximum count
-        ones = (int) ((float) ones / max_count * 50);
-        tens = (int) ((float) tens / max_count * 50);
-        hundreds = (int) ((float) hundreds / max_count * 50);
-
-        // Display histogram bar
-        printf("%c [%c%c%c] %c\n", 'A' + i, '*', '+', '-', 'A' + i);
+        // // Scale count units based on maximum count
+        // ones = (int) ((float) ones / max_count * 50);
+        // tens = (int) ((float) tens / max_count * 50);
+        // hundreds = (int) ((float) hundreds / max_count * 50);
 
         // Display histogram scale
-        printf("  ");
-        for (int j = 0; j < 50; j++) {
-            if (j == ones) {
-                printf("-");
-            } else if (j == tens) {
-                printf("+");
-            } else if (j == hundreds) {
-                printf("*");
-            } else {
-                printf(" ");
-            }
+        printf("%c-%.3d ", 'A'+i, letter_counts[i]);
+        while(hundreds != 0)
+        {
+            printf("*");
+            hundreds--;
+        }
+        while(tens != 0)
+        {
+            printf("+");
+            tens--;
+        }
+        while(ones != 0)
+        {
+            printf("-");
+            ones--;
         }
         printf("\n");
     }
@@ -154,6 +155,7 @@ int init_semaphore(int *semID)
     {
         if (errno == EEXIST) {
             // semaphore already exists
+            *semID = semget(semKey, 1, 0666);
         } 
         else 
         {
