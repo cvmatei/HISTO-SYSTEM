@@ -74,10 +74,6 @@ int main() {
 
         sleep(2);
     }
-
-    //Detach from shared memory segment
-    shmdt(buffer);
-
     return 0;
 }
 

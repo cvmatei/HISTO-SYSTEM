@@ -33,59 +33,47 @@ int main(int argc, char *argv[]) {
     letter_counts = calloc(NUM_LETTERS, sizeof(int));
 
     // Set up SIGINT handler
-    struct sigaction sa;
-    sa.sa_handler = handle_sigint;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    if (sigaction(SIGINT, &sa, NULL) == -1) {
-        perror("sigaction");
-        exit(1);
-    }
+    signal(SIGINT, handle_sigint);
+
+    // Set up SIGALRM handler
+    signal(SIGALRM, readBuffer);
 
     // Main processing loop
     int num_reads = 0;
     while (1) {
+        // Set alarm for 2 seconds
+        alarm(2);
 
-        printf("semid is %d\n", semid);
-        // Wait for semaphore
-        struct sembuf wait_op = {0, -1, 0};
-        if (semop(semid, &wait_op, 1) == -1) {
-            perror("semop wait");
-            exit(1);
-        }
-
-        // Read from buffer
-        while (shared_buffer->read_index != shared_buffer->write_index) {
-            char letter = shared_buffer->buffer[shared_buffer->read_index];
-            letter_counts[letter - 'A']++;
-            shared_buffer->read_index = (shared_buffer->read_index + 1) % BUFFER_SIZE;
-        }
+        // Wait for alarm signal
+        pause();
         num_reads++;
-
-        // Release semaphore
-        struct sembuf signal_op = {0, 1, 0};
-        if (semop(semid, &signal_op, 1) == -1) {
-            perror("semop signal");
-            exit(1);
-        }
-
         // Check if we need to display histogram
         if (num_reads > 5) {
             display_histogram(letter_counts);
             num_reads = 0;
         }
-
-        // Sleep for 2 seconds
-        sleep(2);
     }
 
     return 0;
 }
 
 void handle_sigint(int sig) {
+    // Detach from shared memory segment
+    shmdt(shared_buffer);
+    
+    // Remove the semaphore
+    semctl(semid, 0, IPC_RMID);
+
     // Send SIGINT to data producers
     kill(*dp1_pid, SIGINT);
     kill(*dp2_pid, SIGINT);
+
+    // Remove shared memory segment
+    shmctl(shmid, IPC_RMID, NULL);
+
+    printf("Shazam !!");
+    //Exit with no statement
+    exit(0);
 }
 
 void display_histogram(int *letter_counts) {
@@ -106,11 +94,6 @@ void display_histogram(int *letter_counts) {
         int ones = letter_counts[i] % 10;
         int tens = ((letter_counts[i] % 100) - ones)/10;
         int hundreds = (letter_counts[i] - (tens*10) - ones)/100;
-
-        // // Scale count units based on maximum count
-        // ones = (int) ((float) ones / max_count * 50);
-        // tens = (int) ((float) tens / max_count * 50);
-        // hundreds = (int) ((float) hundreds / max_count * 50);
 
         // Display histogram scale
         printf("%c-%.3d ", 'A'+i, letter_counts[i]);
@@ -167,4 +150,14 @@ int init_semaphore(int *semID)
     // initialize the semaphore value to 1
     semctl(*semID, 0, SETVAL, 1);
     return 0;
+}
+
+void readBuffer(int sig)
+{
+    // Read from buffer
+        while (shared_buffer->read_index != shared_buffer->write_index) {
+            char letter = shared_buffer->buffer[shared_buffer->read_index];
+            letter_counts[letter - 'A']++;
+            shared_buffer->read_index = (shared_buffer->read_index + 1) % BUFFER_SIZE;
+        }
 }

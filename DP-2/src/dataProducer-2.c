@@ -59,10 +59,6 @@ int main(int argc, char* argv[]){
         struct timespec sleepTime = {0, 50000};
         nanosleep(&sleepTime, NULL);
     }
-    
-    //Detach from shared memory segment
-    shmdt(buffer);
-
     return 0;
 }
 
@@ -151,8 +147,6 @@ int init_semaphore(int *semID)
 void detachAndExit(int sig) {
     //Detach from shared memory segment
     shmdt(buffer);
-    //Remove shared memory segment
-    shmctl(sMemID, IPC_RMID, NULL);
     //Exit with no statement
     exit(0);
 }

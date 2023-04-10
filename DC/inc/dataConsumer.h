@@ -25,3 +25,4 @@ typedef struct {
 void handle_sigint(int sig);
 void display_histogram(int *letter_counts);
 int init_semaphore(int *semID);
+void readBuffer(int sig);
