@@ -7,14 +7,13 @@ int main() {
 
     //Check if shared memory segment already exists
     key_t sMemKey = ftok(".", 16535);
-    int sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
+    sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
     if (sMemID == -1) {
         //Shared memory segment already exists
         sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
     }
     
-    printf("shmID is %d\n", sMemID);
-    circular_buffer* buffer = (circular_buffer*) shmat(sMemID, NULL, 0);
+    buffer = (circular_buffer*) shmat(sMemID, NULL, 0);
     buffer->read_index = 0;
     buffer->write_index = 0;
 

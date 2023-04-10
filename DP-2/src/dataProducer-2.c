@@ -4,7 +4,7 @@ int main(int argc, char* argv[]){
     int semID;
     int dp2PID = getpid();
     int dip1PID = getppid();
-    int shmID = atoi(argv[1]);
+    int sharedMemoryID = atoi(argv[1]);
 
     pid_t dcPID = fork();
     if(dcPID == 0){
@@ -14,7 +14,7 @@ int main(int argc, char* argv[]){
         char shmIDStr[PID_STRING];
         sprintf(dp2PIDStr, "%d", dp2PID);
         sprintf(dp2PIDStr, "%d", dip1PID);
-        sprintf(shmIDStr, "%d", shmID);
+        sprintf(shmIDStr, "%d", shmid);
         if(execl("../../DC/bin/DC", "DC", shmIDStr, dp2PIDStr, dp1PIDStr, NULL) == -1){
             printf("Error in executing command line during DC execution in DP-2");
             return 1;
@@ -24,7 +24,30 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    circular_buffer* buffer = (circular_buffer*)shmat(shmID, NULL, 0);
+    //Getting shared memory key
+    key_t shmKey = ftok("../../DP-1/bin", 16535);
+    //Getting shared memory ID
+    shmid = shmget(shmKey, sizeof(circular_buffer), 0660);
+    //Checking to make sure that the shared memory exists
+    if (shmid == -1) {
+        if (errno == EEXIST) {
+            // shared memory exists
+        } 
+        else 
+        {
+            perror("Shared Memory Does NOT Exist");
+            exit(1);
+        }
+    }
+
+    //Attaching shared memory
+    buffer = (circular_buffer*)shmat(shmid, NULL, 0);
+    
+    //Checking to make sure that the memory attached properly
+    if (buffer == (void *) -1) {
+        perror("shmat");
+        exit(1);
+    }
 
     if(init_semaphore(&semID) == 1)
     {

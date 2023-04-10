@@ -17,7 +17,7 @@ typedef struct {
     int write_index;
 } circular_buffer;
 
-int sMemID;
+int shmid;
 circular_buffer* buffer;
 char getChar(int randomInt);
 int init_semaphore(int *semID);
