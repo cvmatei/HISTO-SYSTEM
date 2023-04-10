@@ -13,16 +13,25 @@ int main(int argc, char *argv[]) {
     printf("%d %d %d\n", sharedMemoryID, *dp1_pid, *dp2_pid);
 
     // Attach to shared memory
-    // shmid = shmget(sharedMemoryID, sizeof(circular_buffer), 0660);
-    // if (shmid == -1) {
-    //     perror("shmget DC");
-    //     exit(1);
-    // }
-    shared_buffer = (circular_buffer*)shmat(sharedMemoryID, NULL, 0);
+    key_t shmKey = ftok("../../DP-1/bin", 16535);
+    shmid = shmget(shmKey, sizeof(circular_buffer), 0660);
+    if (shmid == -1) {
+        if (errno == EEXIST) {
+            // shared memory exists
+        } 
+        else 
+        {
+            perror("Shared Memory Does NOT Exist");
+            exit(1);
+        }
+    }
+    printf("shmid is %d and passed is %d", shmid, sharedMemoryID);
+    shared_buffer = (circular_buffer*)shmat(shmid, NULL, 0);
     if (shared_buffer == (void *) -1) {
         perror("shmat");
         exit(1);
     }
+    
 
     if(init_semaphore(&semid) == 1)
     {
