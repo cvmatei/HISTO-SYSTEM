@@ -1,3 +1,12 @@
+/*
+* FILE: dataProducer-2.c
+* PROJECT: HISTO-SYSTEM
+* FIRST VERSION: 04/05/2023
+* PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
+* DESCRIPTION: This file contains the main function for the dataProducer 2 utility. It reads command line arguments, 
+*              sets up shared memory and semaphore, handles signals, and writes the circular buffer.
+*/
+
 #include "../inc/dataProducer-2.h"
 
 int main(int argc, char* argv[]){
@@ -24,31 +33,28 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    //Getting shared memory key
+    // Getting shared memory key
     key_t shmKey = ftok("../../DP-1/bin", 16535);
-    //Getting shared memory ID
+    if(shmKey == -1){
+        perror("Failed to get shared memory key\n");
+        return 1;
+    }
+
+    // Getting shared memory ID
     shmid = shmget(shmKey, sizeof(circular_buffer), 0660);
-    //Checking to make sure that the shared memory exists
-    if (shmid == -1) {
-        if (errno == EEXIST) {
-            // shared memory exists
-        } 
-        else 
-        {
-            perror("Shared Memory Does NOT Exist");
-            exit(1);
-        }
+    if(shmid == -1){
+        perror("Failed to get shared memory ID\n");
+        return 1;
     }
 
-    //Attaching shared memory
+    // Attaching shared memory
     buffer = (circular_buffer*)shmat(shmid, NULL, 0);
-    
-    //Checking to make sure that the memory attached properly
-    if (buffer == (void *) -1) {
-        perror("shmat");
-        exit(1);
+    if(buffer == (void *) -1){
+        perror("Failed to attach shared memory\n");
+        return 1;
     }
 
+    // Initializing semaphore
     if(init_semaphore(&semID) == 1)
     {
         printf("Error: Semaphore creation failed\n");

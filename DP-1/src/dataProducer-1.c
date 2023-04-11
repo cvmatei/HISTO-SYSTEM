@@ -1,3 +1,11 @@
+/*
+* FILE: dataProducer-1.c
+* PROJECT: HISTO-SYSTEM
+* FIRST VERSION: 04/05/2023
+* PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
+* DESCRIPTION: This file contains the main function for the dataProducer 1 utility. It sets up shared memory and semaphore, 
+*              handles signals, and writes the circular buffer.
+*/
 #include "../inc/dataProducer-1.h"
 
 int main() {
@@ -7,19 +15,37 @@ int main() {
 
     //Check if shared memory segment already exists
     key_t sMemKey = ftok(".", 16535);
-    sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
+    if (sMemKey == -1) {
+        printf("Error: ftok() failed to generate shared memory key\n");
+        return 1;
+    }
+    
+    int sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
     if (sMemID == -1) {
-        //Shared memory segment already exists
-        sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
+        if (errno == EEXIST) {
+            sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
+            if (sMemID == -1) {
+                printf("Error: failed to get shared memory segment ID\n");
+                return 1;
+            }
+        } else {
+            printf("Error: failed to create shared memory segment\n");
+            return 1;
+        }
     }
     
     buffer = (circular_buffer*) shmat(sMemID, NULL, 0);
+    if (buffer == (void *) -1) {
+        printf("Error: failed to attach shared memory segment\n");
+        return 1;
+    }
     buffer->read_index = 0;
     buffer->write_index = 0;
 
     if(init_semaphore(&semID) == 1)
     {
         printf("Error: Semaphore creation failed\n");
+        return 1;
     }
 
     //Launch DP-2 through the use of fork()
