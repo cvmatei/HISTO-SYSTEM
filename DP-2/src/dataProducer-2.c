@@ -3,7 +3,7 @@
 int main(int argc, char* argv[]){
     int semID;
     int dp2PID = getpid();
-    int dip1PID = getppid();
+    int dp1PID = getppid();
     int sharedMemoryID = atoi(argv[1]);
 
     pid_t dcPID = fork();
@@ -12,10 +12,10 @@ int main(int argc, char* argv[]){
         char dp2PIDStr[PID_STRING];
         char dp1PIDStr[PID_STRING];
         char shmIDStr[PID_STRING];
+        sprintf(dp1PIDStr, "%d", dp1PID);
         sprintf(dp2PIDStr, "%d", dp2PID);
-        sprintf(dp2PIDStr, "%d", dip1PID);
-        sprintf(shmIDStr, "%d", shmid);
-        if(execl("../../DC/bin/DC", "DC", shmIDStr, dp2PIDStr, dp1PIDStr, NULL) == -1){
+        sprintf(shmIDStr, "%d", sharedMemoryID);
+        if(execl("../../DC/bin/DC", "DC", shmIDStr, dp1PIDStr, dp2PIDStr, NULL) == -1){
             printf("Error in executing command line during DC execution in DP-2");
             return 1;
         }
