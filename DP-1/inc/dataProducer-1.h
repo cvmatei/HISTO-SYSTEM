@@ -1,3 +1,12 @@
+/*
+ * FILE: dataProducer-1.h
+ * PROJECT: HISTO-SYSTEM
+ * FIRST VERSION: 04/05/2023
+ * PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
+ * DESCRIPTION: Header file for the dataProducer-1 program. It contains function declarations for handling 
+ *              shared memory, semaphores, signals, and the struct for the circular buffer.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

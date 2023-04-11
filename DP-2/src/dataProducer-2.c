@@ -70,7 +70,10 @@ int main(int argc, char* argv[]){
 
         // waiting for the semaphore
         struct sembuf semWait = {0, -1, 0};
-        semop(semID, &semWait, 1);
+        if(semop(semID, &semWait, 1) == -1){
+            perror("Failed to wait for semaphore\n");
+            return 1;
+        }
 
         // Calculate number of available elements in the buffer
         int numAvailable = (buffer->read_index - buffer->write_index - 1 + BUFFER_SIZE) % BUFFER_SIZE;
@@ -82,7 +85,10 @@ int main(int argc, char* argv[]){
 
         // signal the semaphore
         struct sembuf semSignal = {0, 1, 0};
-        semop(semID, &semSignal, 1);
+        if(semop(semID, &semWait, 1) == -1){
+            perror("Failed to wait for semaphore\n");
+            return 1;
+        }
 
         // Sleep for 1/20 of a second
         usleep(50000);
@@ -181,7 +187,9 @@ int init_semaphore(int *semID)
 // RETURNS:     None.
 void detachAndExit(int sig) {
     //Detach from shared memory segment
-    shmdt(buffer);
+    if (shmdt(buffer) == -1) {
+        perror("DP2 shmdt");
+    }
     //Exit with no statement
     exit(0);
 }
