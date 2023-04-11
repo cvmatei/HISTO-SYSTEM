@@ -1,14 +1,23 @@
+/*
+* FILE: dataConsumer.c
+* PROJECT: HISTO-SYSTEM
+* FIRST VERSION: 04/05/2023
+* PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
+* DESCRIPTION: This file contains the main function for the dataConsumer utility. It reads command line arguments, 
+*              sets up shared memory and semaphore, handles signals, and displays the histogram of letter counts.
+*/
+
 #include "../inc/dataConsumer.h"
 
-circular_buffer *shared_buffer;
+circular_buffer *sharedBuffer;
 
 int main(int argc, char *argv[]) {
     // Read command line arguments
     int sharedMemoryID = atoi(argv[1]);
-    dp1_pid = malloc(sizeof(int));
-    dp2_pid = malloc(sizeof(int));
-    *dp1_pid = atoi(argv[2]);
-    *dp2_pid = atoi(argv[3]);
+    dp1PID = malloc(sizeof(int));
+    dp2PID = malloc(sizeof(int));
+    *dp1PID = atoi(argv[2]);
+    *dp2PID = atoi(argv[3]);
 
     // Getting shared memory key
     key_t shmKey = ftok("../../DP-1/bin", 16535);
@@ -30,26 +39,26 @@ int main(int argc, char *argv[]) {
     }
 
     // Attaching shared memory
-    shared_buffer = (circular_buffer*)shmat(sharedMemoryID, NULL, 0);
-    if (shared_buffer == (void *)-1) {
+    sharedBuffer = (circular_buffer*)shmat(sharedMemoryID, NULL, 0);
+    if (sharedBuffer == (void *)-1) {
         perror("DC shmat");
         exit(1);
     }
     
     // Initializing semaphore
-    if(init_semaphore(&semid) == 1) {
+    if(initSemaphore(&semid) == 1) {
         printf("Error: Semaphore creation failed\n");
     }
 
     // Initialize letter count array
-    letter_counts = calloc(NUM_LETTERS, sizeof(int));
-    if (letter_counts == NULL) {
+    letterCounts = calloc(NUM_LETTERS, sizeof(int));
+    if (letterCounts == NULL) {
         perror("DC calloc");
         exit(1);
     }
 
     // Set up SIGINT handler
-    signal(SIGINT, handle_sigint);
+    signal(SIGINT, handleSigInt);
 
     // Set up SIGALRM handler
     signal(SIGALRM, readBuffer);
@@ -64,8 +73,8 @@ int main(int argc, char *argv[]) {
         pause();
         num_reads++;
         // Check if we need to display histogram
-        if (num_reads > 5) {
-            display_histogram(letter_counts);
+        if (num_reads > 4) {
+            displayHistogram(letterCounts);
             num_reads = 0;
         }
     }
@@ -73,26 +82,32 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void handle_sigint(int sig) {
+// FUNCTION: 	void handleSigInt(int sig)
+// DESCRIPTION: This function is a signal handler for SIGINT signal. It sends SIGINT signal to data producers, reads all values from the circular buffer,
+//              displays the histogram, detaches from the shared memory segment, removes the semaphore, removes the shared memory segment, and exits the program.
+// PARAMETERS:  int sig - The signal received (SIGINT).
+// RETURNS:     None.
+
+void handleSigInt(int sig) {
     // Send SIGINT to data producers
-    if (kill(*dp1_pid, SIGINT) == -1) {
+    if (kill(*dp1PID, SIGINT) == -1) {
         perror("DC kill dp1");
     }
-    if (kill(*dp2_pid, SIGINT) == -1) {
+    if (kill(*dp2PID, SIGINT) == -1) {
         perror("DC kill dp2");
     }
 
     // Read all values from buffer
-    while (shared_buffer->read_index != shared_buffer->write_index) {
-        char letter = shared_buffer->buffer[shared_buffer->read_index];
-        letter_counts[letter - 'A']++;
+    while (sharedBuffer->read_index != sharedBuffer->write_index) {
+        char letter = sharedBuffer->buffer[sharedBuffer->read_index];
+        letterCounts[letter - 'A']++;
         // Update the read index
-        shared_buffer->read_index = (shared_buffer->read_index + 1) % BUFFER_SIZE;
+        sharedBuffer->read_index = (sharedBuffer->read_index + 1) % BUFFER_SIZE;
     }
-    display_histogram(letter_counts);
+    displayHistogram(letterCounts);
 
     // Detach from shared memory segment
-    if (shmdt(shared_buffer) == -1) {
+    if (shmdt(sharedBuffer) == -1) {
         perror("DC shmdt");
     }
     
@@ -111,7 +126,12 @@ void handle_sigint(int sig) {
     exit(0);
 }
 
-void display_histogram(int *letter_counts) {
+// FUNCTION: 	void displayHistogram(int *letterCounts)
+// DESCRIPTION: This function displays the histogram of all the letters.
+// PARAMETERS:  int *letterCounts - Pointer to an array containing the counts of each letter.
+// RETURNS:     None.
+
+void displayHistogram(int *letterCounts) {
     // Clear screen
     system("clear");
     printf("Histogram:\n");
@@ -119,12 +139,12 @@ void display_histogram(int *letter_counts) {
     // Display histogram for each letter
     for (int i = 0; i < NUM_LETTERS; i++) {
         // Calculate count units
-        int ones = letter_counts[i] % 10;
-        int tens = ((letter_counts[i] % 100) - ones)/10;
-        int hundreds = (letter_counts[i] - (tens*10) - ones)/100;
+        int ones = letterCounts[i] % 10;
+        int tens = ((letterCounts[i] % 100) - ones)/10;
+        int hundreds = (letterCounts[i] - (tens*10) - ones)/100;
 
         // Display histogram scale
-        printf("%c-%.3d ", 'A'+i, letter_counts[i]);
+        printf("%c-%.3d ", 'A'+i, letterCounts[i]);
         while(hundreds != 0)
         {
             printf("*");
@@ -144,13 +164,13 @@ void display_histogram(int *letter_counts) {
     }
 }
 
-// FUNCTION: 	void init_semaphore() 
-// DESCRIPTION: This function initializes the semephore needed for the clients
-//              while making sure that more semaphores are not created.
-// PARAMETERS:  int *semID
-// RETURNS:     None.
+// FUNCTION:    int initSemaphore(int *semID)
+// DESCRIPTION: This function initializes a semaphore needed for access to the buffer. It creates a new semaphore with a key generated using ftok function,
+//              or retrieves an existing semaphore with the same key if it already exists. The semaphore value is then set to 1.
+// PARAMETERS:  int *semID - Pointer to an integer that will hold the semaphore ID.
+// RETURNS:     Returns 0 on success, and returns 1 on failure with an appropriate error message printed.
 
-int init_semaphore(int *semID) 
+int initSemaphore(int *semID) 
 {
     // Getting semaphore key
     key_t semKey = ftok("../../DP-1/bin", 'S');
@@ -181,6 +201,12 @@ int init_semaphore(int *semID)
     return 0;
 }
 
+// FUNCTION: 	void readBuffer(int sig)
+// DESCRIPTION: This function is a signal handler for reading values from the circular buffer.
+//              It waits for the semaphore, reads all values from the circular buffer, and releases the semaphore.
+// PARAMETERS:  int sig - The signal received.
+// RETURNS:     None.
+
 void readBuffer(int sig)
 {
     // waiting for the semaphore
@@ -191,11 +217,11 @@ void readBuffer(int sig)
     }
 
     // Read all values from buffer
-    while (shared_buffer->read_index != shared_buffer->write_index) {
-        char letter = shared_buffer->buffer[shared_buffer->read_index];
-        letter_counts[letter - 'A']++;
+    while (sharedBuffer->read_index != sharedBuffer->write_index) {
+        char letter = sharedBuffer->buffer[sharedBuffer->read_index];
+        letterCounts[letter - 'A']++;
         // Update the read index
-        shared_buffer->read_index = (shared_buffer->read_index + 1) % BUFFER_SIZE;
+        sharedBuffer->read_index = (sharedBuffer->read_index + 1) % BUFFER_SIZE;
     }
 
     struct sembuf semSig = {0, 1, 0};

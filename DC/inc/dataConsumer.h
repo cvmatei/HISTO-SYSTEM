@@ -1,3 +1,12 @@
+/*
+ * FILE: dataConsumer.h
+ * PROJECT: HISTO-SYSTEM
+ * FIRST VERSION: 04/05/2023
+ * PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
+ * DESCRIPTION: Header file for the dataConsumer program. It contains function declarations for handling 
+ *              shared memory, semaphores, signals, and displaying histograms of the letter counts.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,9 +21,9 @@
 
 int shmid;
 int semid;
-int *letter_counts;
-int *dp1_pid;
-int *dp2_pid;
+int *letterCounts;
+int *dp1PID;
+int *dp2PID;
 
 typedef struct {
     char buffer[BUFFER_SIZE];
@@ -22,7 +31,7 @@ typedef struct {
     int write_index;
 } circular_buffer;
 
-void handle_sigint(int sig);
-void display_histogram(int *letter_counts);
-int init_semaphore(int *semID);
+void handleSigInt(int sig);
+void displayHistogram(int *letter_counts);
+int initSemaphore(int *semID);
 void readBuffer(int sig);
