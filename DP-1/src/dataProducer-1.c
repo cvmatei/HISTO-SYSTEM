@@ -4,7 +4,7 @@
 * FIRST VERSION: 04/05/2023
 * PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
 * DESCRIPTION: This file contains the main function for the dataProducer 1 utility. It sets up shared memory and semaphore, 
-*              handles signals, and writes the circular buffer.
+*              handles signals, and writes to the circular buffer.
 */
 #include "../inc/dataProducer-1.h"
 

@@ -4,7 +4,7 @@
 * FIRST VERSION: 04/05/2023
 * PROGRAMMER(s): Cosmin Matei, Ahmed Ruda
 * DESCRIPTION: This file contains the main function for the dataProducer 2 utility. It reads command line arguments, 
-*              sets up shared memory and semaphore, handles signals, and writes the circular buffer.
+*              sets up shared memory and semaphore, handles signals, and writes to the circular buffer.
 */
 
 #include "../inc/dataProducer-2.h"
@@ -90,6 +90,10 @@ int main(int argc, char* argv[]){
     return 0;
 }
 
+// FUNCTION: 	void getChar(int randomInt)
+// DESCRIPTION: This function gets a random character based off of the random number generated
+// PARAMETERS:  int randomInt - a randomly generated integer
+// RETURNS:     None.
 char getChar(int randomInt){
     switch(randomInt){
         case 0:
@@ -142,7 +146,6 @@ char getChar(int randomInt){
 //              while making sure that more semaphores are not created.
 // PARAMETERS:  int *semID
 // RETURNS:     None.
-
 int init_semaphore(int *semID) 
 {
     // get a unique key for the semaphore
@@ -172,6 +175,10 @@ int init_semaphore(int *semID)
     return 0;
 }
 
+// FUNCTION: 	void detachAndExit(int sig)
+// DESCRIPTION: This function handles the termination signal receieved by detaching from the memory and exiting the program
+// PARAMETERS:  int sig - The signal received (SIGINT).
+// RETURNS:     None.
 void detachAndExit(int sig) {
     //Detach from shared memory segment
     shmdt(buffer);
