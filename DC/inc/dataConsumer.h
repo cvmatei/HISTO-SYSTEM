@@ -31,6 +31,7 @@ typedef struct {
     int write_index;
 } circular_buffer;
 
+circular_buffer *sharedBuffer;
 void handleSigInt(int sig);
 void displayHistogram(int *letter_counts);
 int initSemaphore(int *semID);

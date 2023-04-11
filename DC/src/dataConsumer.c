@@ -9,8 +9,6 @@
 
 #include "../inc/dataConsumer.h"
 
-circular_buffer *sharedBuffer;
-
 int main(int argc, char *argv[]) {
     // Read command line arguments
     int sharedMemoryID = atoi(argv[1]);
