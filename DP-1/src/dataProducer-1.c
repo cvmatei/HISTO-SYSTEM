@@ -102,6 +102,10 @@ int main() {
     return 0;
 }
 
+// FUNCTION: 	void getChar(int randomInt)
+// DESCRIPTION: This function gets a random character based off of the random number generated
+// PARAMETERS:  int randomInt - a randomly generated integer
+// RETURNS:     None.
 char getChar(int randomInt){
     switch(randomInt){
         case 0:
@@ -154,7 +158,6 @@ char getChar(int randomInt){
 //              while making sure that more semaphores are not created.
 // PARAMETERS:  int *semID
 // RETURNS:     None.
-
 int init_semaphore(int *semID) 
 {
     // get a unique key for the semaphore
@@ -184,6 +187,10 @@ int init_semaphore(int *semID)
     return 0;
 }
 
+// FUNCTION: 	void detachAndExit(int sig)
+// DESCRIPTION: This function handles the termination signal receieved by detaching from the memory and exiting the program
+// PARAMETERS:  int sig - The signal received (SIGINT).
+// RETURNS:     None.
 void detachAndExit(int sig) {
     //Detach from shared memory segment
     shmdt(buffer);
