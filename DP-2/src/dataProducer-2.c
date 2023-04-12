@@ -15,7 +15,9 @@ int main(int argc, char* argv[]){
     int dp1PID = getppid();
     int sharedMemoryID = atoi(argv[1]);
 
+    // forking to DC
     pid_t dcPID = fork();
+    // Error checking fork
     if(dcPID == 0){
         //child process (DC application)
         char dp2PIDStr[PID_STRING];
