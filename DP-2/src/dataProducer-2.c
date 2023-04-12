@@ -85,7 +85,7 @@ int main(int argc, char* argv[]){
 
         // signal the semaphore
         struct sembuf semSignal = {0, 1, 0};
-        if(semop(semID, &semWait, 1) == -1){
+        if(semop(semID, &semSignal, 1) == -1){
             perror("Failed to wait for semaphore\n");
             return 1;
         }
