@@ -168,17 +168,22 @@ int init_semaphore(int *semID)
     {
         if (errno == EEXIST) {
             // semaphore already exists
+            *semID = semget(semKey, 1, 0666);
+            if(*semID == -1){
+                perror("DP2 semget fail");
+            }
         } 
         else 
         {
             // cannot create semaphore
+            perror("DP2 sem fail");
             return 1;
         }
     }
 
     // initialize the semaphore value to 1
     if (semctl(*semID, 0, SETVAL, 1) == -1) {
-        perror("DC semctl");
+        perror("DP2 semctl");
         return 1;
     }
     return 0;

@@ -190,7 +190,7 @@ int init_semaphore(int *semID)
 
     // initialize the semaphore value to 1
     if (semctl(*semID, 0, SETVAL, 1) == -1) {
-        perror("DC semctl");
+        perror("DP1 semctl");
         return 1;
     }
     return 0;
