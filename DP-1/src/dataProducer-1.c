@@ -13,14 +13,16 @@ int main() {
     int randomInt;
     int semID;
 
-    //Check if shared memory segment already exists
+    // Check if shared memory segment already exists
     key_t sMemKey = ftok(".", 16535);
     if (sMemKey == -1) {
         printf("Error: ftok() failed to generate shared memory key\n");
         return 1;
     }
     
+    // Getting the shared memory ID
     int sMemID = shmget(sMemKey, sizeof(circular_buffer), IPC_CREAT | IPC_EXCL | 0660);
+    // Checking if shared memory exists
     if (sMemID == -1) {
         if (errno == EEXIST) {
             sMemID = shmget(sMemKey, sizeof(circular_buffer), 0660);
@@ -34,38 +36,42 @@ int main() {
         }
     }
     
+    // Attaching buffer to shared memory
     buffer = (circular_buffer*) shmat(sMemID, NULL, 0);
+    // error checking attached memory
     if (buffer == (void *) -1) {
         printf("Error: failed to attach shared memory segment\n");
         return 1;
     }
+    // Setting read and write index
     buffer->read_index = 0;
     buffer->write_index = 0;
 
+    // Initializing semaphore and error checking
     if(init_semaphore(&semID) == 1)
     {
         printf("Error: Semaphore creation failed\n");
         return 1;
     }
 
-    //Launch DP-2 through the use of fork()
+    // Launch DP-2 through the use of fork()
     pid_t pid = fork();
     if (pid == -1) {
-        //Fork failed
+        // Fork failed
         printf("Error: fork() failed\n");
         return 1;
     } else if (pid == 0) {
-        //Child process (DP-2)
+        // Child process (DP-2)
         char sMemIDString[32];
         sprintf(sMemIDString, "%d", sMemID); //Convert shmID to string
         if(execl("../../DP-2/bin/DP-2", "DP-2", sMemIDString, NULL) == -1){
-            //If execl returns, there was an error
+            // If execl returns, there was an error
             printf("Error: execl() failed\n");
             return 1;
-        } //Launch DP-2 with shmID as argument
+        } // Launch DP-2 with shmID as argument
     }
 
-    //Register signal handler for SIGINT
+    // Register signal handler for SIGINT
     signal(SIGINT, detachAndExit);
 
     // Generate 20 random letters and write all 20 letters into the sharedMemory buffer, then sleep for 2 seconds
@@ -80,14 +86,18 @@ int main() {
         // Calculate number of available elements in the buffer
         int numAvailable = (buffer->read_index - buffer->write_index - 1 + BUFFER_SIZE) % BUFFER_SIZE;
 
+        // Checking to see if there is 20 or more spaces available to write to that doesnt go beyond the read buffer
         if (numAvailable >= 20) {
+            // Write 20 characters to buffer
             for (int i = 0; i < 20; i++) {
                 int randomInt = rand() % 20;
                 char letter = getChar(randomInt);
                 buffer->buffer[buffer->write_index] = letter;
                 buffer->write_index = (buffer->write_index + 1) % BUFFER_SIZE;
             }
+        // Checking to make sure to see if there is any space to write to that doesn't go beyond the read index
         } else if (numAvailable > 0) {
+            // Write as many character to the buffer as available
             for (int i = 0; i < numAvailable; i++) {
                 int randomInt = rand() % 20;
                 char letter = getChar(randomInt);

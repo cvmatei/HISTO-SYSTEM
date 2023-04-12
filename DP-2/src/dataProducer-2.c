@@ -78,6 +78,7 @@ int main(int argc, char* argv[]){
         // Calculate number of available elements in the buffer
         int numAvailable = (buffer->read_index - buffer->write_index - 1 + BUFFER_SIZE) % BUFFER_SIZE;
 
+        // Checking that there is space available to write to that doesn't go beyond the read index
         if (numAvailable > 0) {
             buffer->buffer[buffer->write_index] = letter;
             buffer->write_index = (buffer->write_index + 1) % BUFFER_SIZE;
